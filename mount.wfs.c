@@ -53,11 +53,28 @@ static int wfs_getattr(const char *path, struct stat *stbuf) {
 }
 
 static int wfs_mknod(){}
-static int wfs_mkdir(){}
+
+static int wfs_mkdir(const char *path, mode_t mode){
+
+    int res;
+    res = mkdir(path, mode);
+    if(res == -1)
+        return -errno;
+
+    return 0;
+}
 static int wfs_read(){}
 static int wfs_write(){}
 static int wfs_readdir(){}
-static int wfs_unlink(){}
+
+static int wfs_unlink(const char *path){
+    int res;
+    res = unlink(path);
+    if(res = -1)
+        return -errno;
+
+    return 0;
+}
 
 
 static struct fuse_operations wfs_operations = {
