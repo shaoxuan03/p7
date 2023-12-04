@@ -23,7 +23,7 @@ int init_root(char* path){
     }
     log->inode.inode_number = 0;
     log->inode.deleted = 0;
-    log->inode.mode = S_IFDIR(path);
+    log->inode.mode = __S_IFDIR;
     log->inode.atime = 0;
     log->inode.ctime = 0;
     log->inode.mtime = 0;
