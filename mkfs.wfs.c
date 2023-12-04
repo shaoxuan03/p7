@@ -33,4 +33,6 @@ int init_root(char* path){
     log->inode.uid = getuid;
     log->inode.flags = 1;
     log->inode.size = 0; // size of the directory/file
+
+    log->data[0] = 0;
 }
