@@ -1,7 +1,8 @@
 Question and references
     Does the file system go infinite?
+    no, you have 1M size
     Do we need to not remove items?
-
+    if we are doing fsck.wfs.c
 
 References
 https://pages.cs.wisc.edu/~oliphant/cs537-fall23/video1270030510.mp4
