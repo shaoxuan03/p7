@@ -1,0 +1,7 @@
+Question and references
+    Does the file system go infinite?
+    Do we need to not remove items?
+
+
+References
+https://pages.cs.wisc.edu/~oliphant/cs537-fall23/video1270030510.mp4
