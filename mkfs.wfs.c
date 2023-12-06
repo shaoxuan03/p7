@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 //global variable
 struct wfs_sb *superblock;
@@ -29,10 +30,11 @@ int init_root(char* path){
     log->inode.mtime = 0;
     log->inode.links = 1;
     //from this point onward i dont know what value i should initialize them to
-    log->inode.gid = getgid;
-    log->inode.uid = getuid;
+    log->inode.gid = (unsigned int) getgid();
+    log->inode.uid = (unsigned int) getuid();
     log->inode.flags = 1;
     log->inode.size = 0; // size of the directory/file
 
     log->data[0] = 0;
+    return 0;
 }
