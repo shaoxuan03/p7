@@ -40,5 +40,8 @@ int init_root(char* path){
 }
 
 int main(int argc, char *argv[]) {
-    return 0;
+    superblock_init();
+    if(argc != 2)
+        return -1;
+    return init_root(argv[1]);
 }
