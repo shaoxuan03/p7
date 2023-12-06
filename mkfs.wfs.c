@@ -36,4 +36,13 @@ int init_root(char* path){
     log->inode.size = 0; // size of the directory/file
 
     log->data[0] = 0;
+    return 0;
+}
+
+
+int main(int argc, char *argv[]) {
+    superblock_init();
+    if(argc != 2)
+        return -1;
+    return init_root(argv[1]);
 }
