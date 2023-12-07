@@ -7,24 +7,34 @@
 #include <unistd.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include "wfs.h"
 
-// #include "wfs.h"
 
-//parse the path into filename
-char* get_filename(const char* path) {
-    char* filename = 0;
-    strcpy(filename, path);
-
-    while(*filename != '\0'){
-        filename++;
+static struct wfs_inode* inode_finder(const char *path){
+    //struct wfs_log_entry *current_log = 0;//this thing here need to be some entry point;
+    struct wfs_inode *curr_inode = 0;
+    char* copy = strdup(path);
+    char* token = strtok(copy, "/");
+    while(token != 0){
+        int found = 0;
+        size_t num_of_entries = 1000000; // this thing should be the number of entries available in the disk
+        for(size_t i = 0; i < num_of_entries; i++){
+            // if(strcmp(token, current_log -> (wfs_dentry)data[i].name) == 0){ 
+            //     *curr_inode = current_log->inode;
+            //     found == 1;
+            //     break;
+            // }
+        }
+        if (!found || curr_inode == NULL) {
+            // Handle path component not found or invalid path
+            free(copy);
+            return (void*)NULL;
+        }
+        token = strtok(NULL, "/");
     }
 
-    while(*filename != '/'){
-        filename--;
-    }
-    //at this point, filename pointing to the '/'
-    filename++;
-    return filename;
+    free(copy);
+    return curr_inode;
 }
 
 static int wfs_getattr(const char *path, struct stat *stbuf) {
@@ -32,7 +42,6 @@ static int wfs_getattr(const char *path, struct stat *stbuf) {
     // Fill stbuf structure with the attributes of the file/directory indicated by path
     // ...
     int res = 0;
-    //char* filename = get_filename(path);
     memset(stbuf, 0, sizeof(struct stat));
     if(strcmp(path, "/") == 0){
         stbuf->st_uid = (uid_t)getuid();
@@ -48,6 +57,7 @@ static int wfs_getattr(const char *path, struct stat *stbuf) {
         stbuf->st_mtime = time(NULL);
         stbuf->st_mode =  __S_IFREG | 0755;
         stbuf->st_nlink = 1;
+        //need to implement get size
         // fseek(filename, 0L, SEEK_END);
         // int sz = ftell(filename);
         // stbuf->st_size = sz;
@@ -59,8 +69,8 @@ static int wfs_mknod(const char* path, mode_t mode, dev_t rdev) {
     return 0;
 }
 
-static int wfs_mkdir(const char *path, mode_t mode) {
-    // struct wfs_log_entry newlog;
+static int wfs_mkdir(const char *path, mode_t mode){
+    //struct wfs_log_entry newlog;
     int res;
     res = mkdir(path, mode);
     if(res == -1)
@@ -70,21 +80,11 @@ static int wfs_mkdir(const char *path, mode_t mode) {
 }
 
 static int wfs_read(const char *path, char *buf, size_t size, off_t offset,
-            struct fuse_file_info *fi){
-    int fd;
-    int res;
-
-    (void) fi;
-    fd = open(path, O_RDONLY);
-    if (fd == -1)
-        return -errno;
-
-    res = pread(fd, buf, size, offset);
-    if (res == -1)
-        res = -errno;
-
-    close(fd);
-    return res;
+			struct fuse_file_info *fi){
+    
+    inode_finder(path);
+    //how to access the file that I want 
+    return 0;
 }
 
 static int wfs_write(const char *path, const char *buf, size_t size,
