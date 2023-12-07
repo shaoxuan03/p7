@@ -7,7 +7,27 @@
 #include <unistd.h>
 #include <stddef.h>
 #include <stdlib.h>
+<<<<<<< HEAD
 #include "wfs.h"
+=======
+
+//parse the path into filename
+char* get_filename(const char* path) {
+    char* filename = 0;
+    strcpy(filename, path);
+
+    while(*filename != '\0'){
+        filename++;
+    }
+
+    while(*filename != '/'){
+        filename--;
+    }
+    //at this point, filename pointing to the '/'
+    filename++;
+    return filename;
+}
+>>>>>>> 34321565d83e8a39d632c03503d6b04dd470a74c
 
 static int wfs_getattr(const char *path, struct stat *stbuf) {
     // Implementation of getattr function to retrieve file attributes
@@ -38,12 +58,17 @@ static int wfs_getattr(const char *path, struct stat *stbuf) {
     return 0; // Return 0 on success
 }
 
-static int wfs_mknod(const char* path, mode_t mode, dev_t rdev){
+static int wfs_mknod(const char* path, mode_t mode, dev_t rdev) {
     return 0;
 }
 
+<<<<<<< HEAD
 static int wfs_mkdir(const char *path, mode_t mode){
     //struct wfs_log_entry newlog;
+=======
+static int wfs_mkdir(const char *path, mode_t mode) {
+    struct wfs_log_entry newlog;
+>>>>>>> 34321565d83e8a39d632c03503d6b04dd470a74c
     int res;
     res = mkdir(path, mode);
     if(res == -1)
@@ -86,11 +111,26 @@ static int wfs_write(const char *path, const char *buf, size_t size,
 	return res;
 }
 
-static int wfs_readdir(const char* path, void* buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi){
+/**
+ * RETURNS
+ *  returns 0 on success
+*/
+static int wfs_readdir(const char* path, void* buf, 
+    fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi) {
+    
+
+    filler(buf, ".", NULL, 0);  // Current Directory
+    filler(buf, "..", NULL, 0); // Parent Directory
+
+    if (strcmp(path, "/") == 0) {
+        filler(buf, "some placeholder", NULL, 0);
+    }
+
+
     return 0;
 }
 
-static int wfs_unlink(const char *path){
+static int wfs_unlink(const char *path) {
     int res;
     res = unlink(path);
     if(res == -1)
@@ -101,16 +141,14 @@ static int wfs_unlink(const char *path){
 
 
 static struct fuse_operations wfs_operations = {
+    // Add other functions (read, write, mkdir, etc.) here as needed
     .getattr    = wfs_getattr,
     .mknod      = wfs_mknod,
     .mkdir      = wfs_mkdir,
-    .read	    = wfs_read,
+    .read       = wfs_read,
     .write      = wfs_write,
-    .readdir	= wfs_readdir,
-    .unlink    	= wfs_unlink,
-
-    // Add other functions (read, write, mkdir, etc.) here as needed
-    .getattr    = wfs_getattr
+    .readdir    = wfs_readdir,
+    .unlink     = wfs_unlink,
 
 };
 
