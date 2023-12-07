@@ -7,34 +7,41 @@
 #include <unistd.h>
 #include <stddef.h>
 #include <stdlib.h>
-<<<<<<< HEAD
 #include "wfs.h"
-=======
 
-//parse the path into filename
-char* get_filename(const char* path) {
-    char* filename = 0;
-    strcpy(filename, path);
 
-    while(*filename != '\0'){
-        filename++;
+static struct wfs_inode* inode_finder(const char *path){
+    struct wfs_log_entry *current_log = 0;//this thing here need to be some entry point;
+    struct wfs_inode *curr_inode = 0;
+    char* copy = strdup(path);
+    char* token = strtok(copy, "/");
+    while(token != 0){
+        int found = 0;
+        size_t num_of_entries = 10000000; // this thing should be the number of entries available in the disk
+        for(size_t i = 0; i < num_of_entries; i++){
+            if(strcmp(token, current_log -> (wfs_dentry)data[i].name) == 0){ 
+                *curr_inode = current_log->inode;
+                found == 1;
+                break;
+            }
+        }
+        if (!found || curr_inode == NULL) {
+            // Handle path component not found or invalid path
+            free(copy);
+            return (void*)NULL;
+        }
+        token = strtok(NULL, "/");
     }
 
-    while(*filename != '/'){
-        filename--;
-    }
-    //at this point, filename pointing to the '/'
-    filename++;
-    return filename;
+    free(copy);
+    return curr_inode;
 }
->>>>>>> 34321565d83e8a39d632c03503d6b04dd470a74c
 
 static int wfs_getattr(const char *path, struct stat *stbuf) {
     // Implementation of getattr function to retrieve file attributes
     // Fill stbuf structure with the attributes of the file/directory indicated by path
     // ...
     int res = 0;
-    //char* filename = get_filename(path);
     memset(stbuf, 0, sizeof(struct stat));
     if(strcmp(path, "/") == 0){
         stbuf->st_uid = (uid_t)getuid();
@@ -62,26 +69,13 @@ static int wfs_mknod(const char* path, mode_t mode, dev_t rdev) {
     return 0;
 }
 
-<<<<<<< HEAD
 static int wfs_mkdir(const char *path, mode_t mode){
     //struct wfs_log_entry newlog;
-=======
-static int wfs_mkdir(const char *path, mode_t mode) {
-    struct wfs_log_entry newlog;
->>>>>>> 34321565d83e8a39d632c03503d6b04dd470a74c
     int res;
     res = mkdir(path, mode);
     if(res == -1)
         return -errno;
 
-    return 0;
-}
-static int inode_finder(const char *path){
-    char* copy = strdup(path);
-    char* filename = strtok(copy, "/");
-    while(filename != 0){
-
-    }
     return 0;
 }
 
