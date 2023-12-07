@@ -36,4 +36,11 @@ int init_root(char* path){
     log->inode.size = 0; // size of the directory/file
 
     log->data[0] = 0;
+    return 0;
+}
+
+// Do I add something like this?
+int main(int argc, char *argv[]) {
+
+
 }

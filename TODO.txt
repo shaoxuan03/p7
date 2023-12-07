@@ -1,2 +1,34 @@
 TODO:
 to figure out how to tests if previous things is correct
+
+
+to have these features
+    getattr
+    mknod
+    mkdir
+    read
+    write
+    readdir
+    unlink
+
+https://www.cs.hmc.edu/~geoff/classes/hmc.cs135.201001/homework/fuse/fuse_doc.html
+getattr(const char* path, struct stat* stbuf)
+    Return file attributes. The "stat" structure is described in detail in the stat(2) manual page. For the given pathname, this should fill in the elements of the "stat" structure. If a field is meaningless or semi-meaningless (e.g., st_ino) then it should be set to 0 or given a "reasonable" value. This call is pretty much required for a usable filesystem.
+
+mknod(const char* path, mode_t mode, dev_t rdev)
+    Make a special (device) file, FIFO, or socket. See mknod(2) for details. This function is rarely needed, since it's uncommon to make these objects inside special-purpose filesystems.  
+
+mkdir(const char* path, mode_t mode)
+    Create a directory with the given name. The directory permissions are encoded in mode. See mkdir(2) for details. This function is needed for any reasonable read/write filesystem.
+
+read(const char* path, char *buf, size_t size, off_t offset, struct fuse_file_info* fi)
+    Read sizebytes from the given file into the buffer buf, beginning offset bytes into the file. See read(2) for full details. Returns the number of bytes transferred, or 0 if offset was at or beyond the end of the file. Required for any sensible filesystem.
+
+write(const char* path, char *buf, size_t size, off_t offset, struct fuse_file_info* fi)
+    As for read above, except that it can't return 0.
+
+readdir(const char* path, void* buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi)
+    Return one or more directory entries (struct dirent) to the caller. This is one of the most complex FUSE functions. It is related to, but not identical to, the readdir(2) and getdents(2) system calls, and the readdir(3) library function. Because of its complexity, it is described separately below. Required for essentially any filesystem, since it's what makes ls and a whole bunch of other things work.
+
+unlink(const char* path)
+    Remove (delete) the given file, symbolic link, hard link, or special node. Note that if you support hard links, unlink only deletes the data when the last hard link is removed. See unlink(2) for details.
