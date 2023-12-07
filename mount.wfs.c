@@ -88,21 +88,21 @@ static int wfs_read(const char *path, char *buf, size_t size, off_t offset,
 }
 
 static int wfs_write(const char *path, const char *buf, size_t size,
-			 off_t offset, struct fuse_file_info *fi){
+             off_t offset, struct fuse_file_info *fi){
     int fd;
-	int res;
+    int res;
 
-	(void) fi;
-	fd = open(path, O_WRONLY);
-	if (fd == -1)
-		return -errno;
+    (void) fi;
+    fd = open(path, O_WRONLY);
+    if (fd == -1)
+        return -errno;
 
-	res = pwrite(fd, buf, size, offset);
-	if (res == -1)
-		res = -errno;
+    res = pwrite(fd, buf, size, offset);
+    if (res == -1)
+        res = -errno;
 
-	close(fd);
-	return res;
+    close(fd);
+    return res;
 }
 
 /**
@@ -149,23 +149,13 @@ static struct fuse_operations wfs_operations = {
 int main(int argc, char *argv[]) {
     // Initialize FUSE with specified operations
     // Filter argc and argv here and then pass it to fuse_main
-    if (argc < 4) {
-        return -1;
-    }
-    //char *disk_path = argv[argc - 2];
-    char *mount_point = argv[argc - 1];
-    char *fuse_argv[argc-1];
-    for(int i = 0; i < argc - 1; i++){
-        if(i == argc - 2){
-            fuse_argv[i] = mount_point;
-            //printf("%d\n", i);
+    char *new_argv[argc - 1];
+    for (int i = 0; i < argc; i++) {
+        if (i == 3) {
+            new_argv[i] = argv[i+1];
+            break;
         }
-        else
-            fuse_argv[i] = argv[i];
+        new_argv[i] = argv[i];
     }
-    printf("%s\n", fuse_argv[0]);
-    printf("%s\n", fuse_argv[1]);
-    printf("%s\n", fuse_argv[2]);
-    printf("%s\n", fuse_argv[3]);
-    return fuse_main(argc, fuse_argv, &wfs_operations, NULL);
+    return fuse_main(argc - 1, new_argv, &wfs_operations, NULL);
 }
