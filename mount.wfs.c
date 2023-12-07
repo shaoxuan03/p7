@@ -7,23 +7,7 @@
 #include <unistd.h>
 #include <stddef.h>
 #include <stdlib.h>
-
-//parse the path into filename
-char* get_filename(const char* path){
-    char* filename = 0;
-    strcpy(filename, path);
-
-    while(*filename != '\0'){
-        filename++;
-    }
-
-    while(*filename != '/'){
-        filename--;
-    }
-    //at this point, filename pointing to the '/'
-    filename++;
-    return filename;
-}
+#include "wfs.h"
 
 static int wfs_getattr(const char *path, struct stat *stbuf) {
     // Implementation of getattr function to retrieve file attributes
@@ -46,6 +30,7 @@ static int wfs_getattr(const char *path, struct stat *stbuf) {
         stbuf->st_mtime = time(NULL);
         stbuf->st_mode =  __S_IFREG | 0755;
         stbuf->st_nlink = 1;
+        //need to implement get size
         // fseek(filename, 0L, SEEK_END);
         // int sz = ftell(filename);
         // stbuf->st_size = sz;
@@ -58,7 +43,7 @@ static int wfs_mknod(const char* path, mode_t mode, dev_t rdev){
 }
 
 static int wfs_mkdir(const char *path, mode_t mode){
-    struct wfs_log_entry newlog;
+    //struct wfs_log_entry newlog;
     int res;
     res = mkdir(path, mode);
     if(res == -1)
@@ -66,23 +51,21 @@ static int wfs_mkdir(const char *path, mode_t mode){
 
     return 0;
 }
+static int inode_finder(const char *path){
+    char* copy = strdup(path);
+    char* filename = strtok(copy, "/");
+    while(filename != 0){
+
+    }
+    return 0;
+}
 
 static int wfs_read(const char *path, char *buf, size_t size, off_t offset,
 			struct fuse_file_info *fi){
-    int fd;
-	int res;
-
-	(void) fi;
-	fd = open(path, O_RDONLY);
-	if (fd == -1)
-		return -errno;
-
-	res = pread(fd, buf, size, offset);
-	if (res == -1)
-		res = -errno;
-
-	close(fd);
-	return res;
+    
+    inode_finder(path);
+    //how to access the file that I want 
+    return 0;
 }
 
 static int wfs_write(const char *path, const char *buf, size_t size,
@@ -134,5 +117,17 @@ static struct fuse_operations wfs_operations = {
 int main(int argc, char *argv[]) {
     // Initialize FUSE with specified operations
     // Filter argc and argv here and then pass it to fuse_main
-    return fuse_main(argc, argv, &wfs_operations, NULL);
+    if (argc < 4) {
+        return -1;
+    }
+    //char *disk_path = argv[argc - 2];
+    char *mount_point = argv[argc - 1];
+    char *fuse_argv[argc-1];
+    for(int i = 0; i < argc - 1; i++){
+        fuse_argv[i] = argv[i];
+        if(i == argc - 1){
+            fuse_argv[argc - 1] = mount_point;
+        }
+    }
+    return fuse_main(argc, fuse_argv, &wfs_operations, NULL);
 }

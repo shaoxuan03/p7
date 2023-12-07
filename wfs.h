@@ -36,4 +36,5 @@ struct wfs_log_entry {
     char data[];
 };
 
+__uid_t global_inode = 0;
 #endif

@@ -13,7 +13,7 @@ struct wfs_sb *superblock;
 void superblock_init(){
     superblock = malloc(sizeof(struct wfs_sb));
     superblock->magic = WFS_MAGIC;
-    superblock->head = 0;
+    superblock->head = sizeof(superblock) + sizeof(struct wfs_log_entry); //size of superblock and root entry
 }
 
 int init_root(char* path){
@@ -23,7 +23,7 @@ int init_root(char* path){
     if (stat(path, &stats) != 0){
         return -1;
     }
-    log->inode.inode_number = 0;
+    log->inode.inode_number = global_inode;
     log->inode.deleted = 0;
     log->inode.mode = __S_IFDIR;
     log->inode.atime = time(NULL);
