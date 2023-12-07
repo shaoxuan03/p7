@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <time.h>
 
 //global variable
 struct wfs_sb *superblock;
@@ -25,9 +26,9 @@ int init_root(char* path){
     log->inode.inode_number = 0;
     log->inode.deleted = 0;
     log->inode.mode = __S_IFDIR;
-    log->inode.atime = 0;
-    log->inode.ctime = 0;
-    log->inode.mtime = 0;
+    log->inode.atime = time(NULL);
+    log->inode.ctime = time(NULL);
+    log->inode.mtime = time(NULL);
     log->inode.links = 1;
     //from this point onward i dont know what value i should initialize them to
     log->inode.gid = (uid_t)getgid();

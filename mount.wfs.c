@@ -53,12 +53,12 @@ static int wfs_getattr(const char *path, struct stat *stbuf) {
     return 0; // Return 0 on success
 }
 
-static int wfs_mknod(){
+static int wfs_mknod(const char* path, mode_t mode, dev_t rdev){
     return 0;
 }
 
 static int wfs_mkdir(const char *path, mode_t mode){
-
+    struct wfs_log_entry newlog;
     int res;
     res = mkdir(path, mode);
     if(res == -1)
@@ -66,13 +66,44 @@ static int wfs_mkdir(const char *path, mode_t mode){
 
     return 0;
 }
-static int wfs_read(){
-    return 0;
+
+static int wfs_read(const char *path, char *buf, size_t size, off_t offset,
+			struct fuse_file_info *fi){
+    int fd;
+	int res;
+
+	(void) fi;
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return -errno;
+
+	res = pread(fd, buf, size, offset);
+	if (res == -1)
+		res = -errno;
+
+	close(fd);
+	return res;
 }
-static int wfs_write(){
-    return 0;
+
+static int wfs_write(const char *path, const char *buf, size_t size,
+			 off_t offset, struct fuse_file_info *fi){
+    int fd;
+	int res;
+
+	(void) fi;
+	fd = open(path, O_WRONLY);
+	if (fd == -1)
+		return -errno;
+
+	res = pwrite(fd, buf, size, offset);
+	if (res == -1)
+		res = -errno;
+
+	close(fd);
+	return res;
 }
-static int wfs_readdir(){
+
+static int wfs_readdir(const char* path, void* buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi){
     return 0;
 }
 
