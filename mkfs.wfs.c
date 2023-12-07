@@ -6,14 +6,13 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
+#include <fcntl.h>
+#include <sys/mman.h>
 
-//global variable
-struct wfs_sb *superblock;
 
-void superblock_init(){
-    superblock = malloc(sizeof(struct wfs_sb));
+void superblock_init(struct wfs_sb* superblock){
     superblock->magic = WFS_MAGIC;
-    superblock->head = sizeof(superblock) + sizeof(struct wfs_log_entry); //size of superblock and root entry
+    superblock->head = sizeof(struct wfs_sb) + sizeof(struct wfs_inode); //size of superblock and root entry
 }
 
 int init_root(char* path){
@@ -42,8 +41,22 @@ int init_root(char* path){
 
 
 int main(int argc, char *argv[]) {
-    superblock_init();
+    int fdin;
+    void* disk;
+    struct stat file_stat;
+    
     if(argc != 2)
         return -1;
+
+    if((fdin = open(argv[1], O_RDWR)) < 0)
+        return -1;
+    
+    if((disk = mmap((void*)argv[1], file_state.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fdin, 0)) == MAP_FAILED)
+        return -1;
+
+    if(stat(argv[1], &file_stat) < 0)
+        return -1;
+
+    superblock_init((struct wfs_sb*) disk);
     return init_root(argv[1]);
 }
