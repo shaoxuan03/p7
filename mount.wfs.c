@@ -11,19 +11,19 @@
 
 
 static struct wfs_inode* inode_finder(const char *path){
-    struct wfs_log_entry *current_log = 0;//this thing here need to be some entry point;
+    //struct wfs_log_entry *current_log = 0;//this thing here need to be some entry point;
     struct wfs_inode *curr_inode = 0;
     char* copy = strdup(path);
     char* token = strtok(copy, "/");
     while(token != 0){
         int found = 0;
-        size_t num_of_entries = 10000000; // this thing should be the number of entries available in the disk
+        size_t num_of_entries = 1000000; // this thing should be the number of entries available in the disk
         for(size_t i = 0; i < num_of_entries; i++){
-            if(strcmp(token, current_log -> (wfs_dentry)data[i].name) == 0){ 
-                *curr_inode = current_log->inode;
-                found == 1;
-                break;
-            }
+            // if(strcmp(token, current_log -> (wfs_dentry)data[i].name) == 0){ 
+            //     *curr_inode = current_log->inode;
+            //     found == 1;
+            //     break;
+            // }
         }
         if (!found || curr_inode == NULL) {
             // Handle path component not found or invalid path
@@ -156,10 +156,16 @@ int main(int argc, char *argv[]) {
     char *mount_point = argv[argc - 1];
     char *fuse_argv[argc-1];
     for(int i = 0; i < argc - 1; i++){
-        fuse_argv[i] = argv[i];
-        if(i == argc - 1){
-            fuse_argv[argc - 1] = mount_point;
+        if(i == argc - 2){
+            fuse_argv[i] = mount_point;
+            //printf("%d\n", i);
         }
+        else
+            fuse_argv[i] = argv[i];
     }
+    printf("%s\n", fuse_argv[0]);
+    printf("%s\n", fuse_argv[1]);
+    printf("%s\n", fuse_argv[2]);
+    printf("%s\n", fuse_argv[3]);
     return fuse_main(argc, fuse_argv, &wfs_operations, NULL);
 }
