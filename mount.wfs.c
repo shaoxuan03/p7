@@ -71,6 +71,8 @@ static int wfs_mknod(const char* path, mode_t mode, dev_t rdev) {
 
 static int wfs_mkdir(const char *path, mode_t mode){
     //struct wfs_log_entry newlog;
+    // this is wrong
+    // printf("running create dir\n");
     int res;
     res = mkdir(path, mode);
     if(res == -1)
@@ -116,6 +118,7 @@ static int wfs_readdir(const char* path, void* buf,
     filler(buf, ".", NULL, 0);  // Current Directory
     filler(buf, "..", NULL, 0); // Parent Directory
 
+    printf("path %s\n", path);
     if (strcmp(path, "/") == 0) {
         filler(buf, "some placeholder", NULL, 0);
     }
