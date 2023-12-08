@@ -42,20 +42,20 @@ int init_root(char* path){
 
 
 int main(int argc, char *argv[]) {
-    int fdin;
+    int fd;
     void* disk;
     struct stat file_stat;
     
     if(argc != 2)
         return -1;
 
-    if((fdin = open(argv[1], O_RDWR)) < 0)
-        return -1;
-    
-    if((disk = mmap((void*)argv[1], file_stat.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fdin, 0)) == MAP_FAILED)
+    if((fd = open(argv[1], O_RDWR)) < 0)
         return -1;
 
     if(stat(argv[1], &file_stat) < 0)
+        return -1;
+    
+    if((disk = mmap((void*)argv[1], file_stat.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == MAP_FAILED)
         return -1;
 
     superblock_init((struct wfs_sb*) disk);

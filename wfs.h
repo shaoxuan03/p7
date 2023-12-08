@@ -37,5 +37,10 @@ struct wfs_log_entry {
     char data[];
 };
 
+struct wfs_starting_point{
+    void* disk;
+    uint32_t head;
+};
+
 __uid_t global_inode = 0;
 #endif

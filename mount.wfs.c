@@ -8,38 +8,53 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include "wfs.h"
+#include <fcntl.h>
+#include <sys/mman.h>
+
+//global variable
+struct wfs_starting_point* start;
 
 //use inode num to find log entry
 static struct wfs_log_entry* inode_num_to_log(unsigned long inode_number){
+    struct wfs_log_entry* start_entry =  (struct wfs_log_entry*)(start->disk + sizeof(struct wfs_sb));
     struct wfs_log_entry* log_entry = 0;
     struct wfs_inode *curr_inode = 0;
-    for(int i = sb->head; i > sizeof(sb); i--){
-        curr_inode = i;
-        if(curr_inode ->inode_number == inode_number){
-            log_entry = curr_inode;
-            break;
+    while(start_entry <= start->head){
+        if(start_entry->inode.inode_number == inode_number){
+            if(start_entry->inode.deleted == 0){
+                log_entry = start_entry;
+                break;
+            }
+            else{
+                start_entry += sizeof(struct wfs_log_entry);
+            }
         }
-        return NULL;
     }
     return log_entry;
 }
 
 //use the name to find inode num, then call the helper method to find log entry
-static struct wfs_inode* inode_finder(const char *path){
+static struct wfs_log_entry* inode_finder(const char *path){
     //first thing is to start with root
     int root_inode_num = 0;
-    struct wfs_log_entry* root_log = inode_num_to_log(0);
+    struct wfs_log_entry* root_log = inode_num_to_log(root_inode_num);
+    struct wfs_log_entry* curr_log;
+    int curr_inode_num = 0;
     //found the root, access the data 
     char* copy = strdup(path);
     char* token = strtok(copy, "/");
-    struct wfs_dentry* arr = (struct wfs_dentry*)root_log -> data;
+    //struct wfs_dentry* arr = (struct wfs_dentry*)root_log -> data;
     while(token != NULL){
-        for(int i = 0; i < sizeof(arr); i++){
-            if(token == arr[i].name){
-                
+        for(int i = 0; i < root_log->inode.size/sizeof(struct wfs_dentry); i++){
+            if(token == (struct wfs_dentry) root_log->data.){
+                curr_inode_num = arr[i].inode_number;
+                curr_log = inode_num_to_log(curr_inode_num);
+                break;
             }
         }
+        token = strtok(NULL, "/");
     }
+    return &curr_log->inode;
 }
 
 static int wfs_getattr(const char *path, struct stat *stbuf) {
@@ -157,6 +172,22 @@ int main(int argc, char *argv[]) {
     if (argc < 4) {
         return -1;
     }
+
+    int fd; 
+    void* disk;
+    struct stat file_stat;
+    if((fd = open(argv[argc-2], O_RDWR)) < 0)
+        return -1;
+    
+    if(stat(argv[argc-2], &file_stat) < 0)
+        return -1;
+
+    if((disk = mmap((void*)argv[argc-2], file_stat.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == MAP_FAILED)
+        return -1;
+
+    start->disk = disk;
+    start->head = sizeof(struct wfs_sb);
+
     char *new_argv[argc - 1];
     for (int i = 0; i < argc; i++) {
         if (i == 3) {
