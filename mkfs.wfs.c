@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     if((fdin = open(argv[1], O_RDWR)) < 0)
         return -1;
     
-    if((disk = mmap((void*)argv[1], file_state.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fdin, 0)) == MAP_FAILED)
+    if((disk = mmap((void*)argv[1], file_stat.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fdin, 0)) == MAP_FAILED)
         return -1;
 
     if(stat(argv[1], &file_stat) < 0)

@@ -11,7 +11,7 @@
 
 
 static struct wfs_inode* inode_finder(const char *path){
-    struct wfs_log_entry *current_log = 0;//this thing here need to be some entry point;
+    // struct wfs_log_entry *current_log = 0;//this thing here need to be some entry point;
     struct wfs_inode *curr_inode = 0;
     char* copy = strdup(path);
     char* token = strtok(copy, "/");
@@ -19,11 +19,11 @@ static struct wfs_inode* inode_finder(const char *path){
         int found = 0;
         size_t num_of_entries = 1000000; // this thing should be the number of entries available in the disk
         for(size_t i = 0; i < num_of_entries; i++){
-            if(strcmp(token, current_log -> data[i].name) == 0){ 
-                *curr_inode = current_log->inode;
-                found == 1;
-                break;
-            }
+            // if(strcmp(token, current_log->data[i].name) == 0){ 
+            //     *curr_inode = current_log->inode;
+            //     found == 1;
+            //     break;
+            // }
         }
         if (!found || curr_inode == NULL) {
             // Handle path component not found or invalid path
@@ -41,15 +41,22 @@ static int wfs_getattr(const char *path, struct stat *stbuf) {
     // Implementation of getattr function to retrieve file attributes
     // Fill stbuf structure with the attributes of the file/directory indicated by path
     // ...
+    // printf("doing something in getattr\n");
     int res = 0;
     memset(stbuf, 0, sizeof(struct stat));
     if(strcmp(path, "/") == 0){
+        // Root directory
         stbuf->st_uid = (uid_t)getuid();
         stbuf->st_gid = (uid_t)getgid();
         stbuf->st_mtime = time(NULL);
         stbuf->st_mode =  __S_IFDIR | 0755;
         stbuf->st_nlink = 2;
         return res;
+    }else if (strcmp(path, "/hello") == 0) {
+        // File "hello" inside the root directory
+        stbuf->st_mode = S_IFREG | 0444;
+        stbuf->st_nlink = 1;
+        stbuf->st_size = strlen("Hello, World!");
     }
     else{
         stbuf->st_uid = (uid_t)getuid();
@@ -72,21 +79,45 @@ static int wfs_mknod(const char* path, mode_t mode, dev_t rdev) {
 static int wfs_mkdir(const char *path, mode_t mode){
     //struct wfs_log_entry newlog;
     // this is wrong
-    // printf("running create dir\n");
-    int res;
-    res = mkdir(path, mode);
-    if(res == -1)
-        return -errno;
-
+    printf("running create dir\n");
+    // int res;
+    // res = mkdir(path, mode);
+    // if(res == -1)
+    //     return -errno;
+    inode_finder(path);
     return 0;
 }
 
 static int wfs_read(const char *path, char *buf, size_t size, off_t offset,
 			struct fuse_file_info *fi){
     
-    inode_finder(path);
-    //how to access the file that I want 
-    return 0;
+    // inode_finder(path);
+    // //how to access the file that I want 
+    // printf("read is called\n");
+    // return 0;
+
+
+        size_t len;
+    (void) fi;
+
+    if (strcmp(path, "/hello") != 0) {
+        return -ENOENT; // File not found
+    }
+
+    // Content of the "hello" file
+    const char *hello_str = "Hello, World!";
+    len = strlen(hello_str);
+
+    if (offset < len) {
+        if (offset + size > len) {
+            size = len - offset;
+        }
+        memcpy(buf, hello_str + offset, size);
+    } else {
+        size = 0;
+    }
+
+    return size;
 }
 
 static int wfs_write(const char *path, const char *buf, size_t size,
@@ -114,13 +145,14 @@ static int wfs_write(const char *path, const char *buf, size_t size,
 static int wfs_readdir(const char* path, void* buf, 
     fuse_fill_dir_t filler, off_t offset, struct fuse_file_info* fi) {
     
+    // printf("doing something in readdir\n");
 
     filler(buf, ".", NULL, 0);  // Current Directory
     filler(buf, "..", NULL, 0); // Parent Directory
 
-    printf("path %s\n", path);
+    // printf("path %s\n", path);
     if (strcmp(path, "/") == 0) {
-        filler(buf, "some placeholder", NULL, 0);
+        // filler(buf, "some placeholder", NULL, 0);
     }
 
 
