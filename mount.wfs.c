@@ -9,33 +9,37 @@
 #include <stdlib.h>
 #include "wfs.h"
 
-
-static struct wfs_inode* inode_finder(const char *path){
-    struct wfs_log_entry *current_log = 0;//this thing here need to be some entry point;
+//use inode num to find log entry
+static struct wfs_log_entry* inode_num_to_log(unsigned long inode_number){
+    struct wfs_log_entry* log_entry = 0;
     struct wfs_inode *curr_inode = 0;
+    for(int i = sb->head; i > sizeof(sb); i--){
+        curr_inode = i;
+        if(curr_inode ->inode_number == inode_number){
+            log_entry = curr_inode;
+            break;
+        }
+        return NULL;
+    }
+    return log_entry;
+}
+
+//use the name to find inode num, then call the helper method to find log entry
+static struct wfs_inode* inode_finder(const char *path){
+    //first thing is to start with root
+    int root_inode_num = 0;
+    struct wfs_log_entry* root_log = inode_num_to_log(0);
+    //found the root, access the data 
     char* copy = strdup(path);
     char* token = strtok(copy, "/");
-    struct wfs_dentry *arr = (struct wfs_dentry*) current_log->data;
-    while(token != 0){
-        int found = 0;
-        size_t num_of_entries = sb->head; // this thing should be the number of entries available in the disk, use head
-        for(size_t i = 0; i < num_of_entries; i++){
-            if(strcmp(token, arr[i].name) == 0){ 
-                *curr_inode = current_log->inode;
-                found = 1;
-                break;
-            }   
+    struct wfs_dentry* arr = (struct wfs_dentry*)root_log -> data;
+    while(token != NULL){
+        for(int i = 0; i < sizeof(arr); i++){
+            if(token == arr[i].name){
+                
+            }
         }
-        if (found == 0|| curr_inode == NULL) {
-            // Handle path component not found or invalid path
-            free(copy);
-            return (void*)NULL;
-        }
-        token = strtok(NULL, "/");
     }
-
-    free(copy);
-    return curr_inode;
 }
 
 static int wfs_getattr(const char *path, struct stat *stbuf) {
@@ -69,7 +73,7 @@ static int wfs_getattr(const char *path, struct stat *stbuf) {
 
 static int wfs_mknod(const char* path, mode_t mode, dev_t rdev) {
    // char* copy_path = strdup(path);
-    
+
     return 0;
 }
 
