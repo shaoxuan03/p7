@@ -43,18 +43,22 @@ static struct wfs_log_entry* inode_finder(const char *path){
     //found the root, access the data 
     char* copy = strdup(path);
     char* token = strtok(copy, "/");
-    //struct wfs_dentry* arr = (struct wfs_dentry*)root_log -> data;
+
     while(token != NULL){
-        for(int i = 0; i < root_log->inode.size/sizeof(struct wfs_dentry); i++){
-            if(token == (struct wfs_dentry) root_log->data.){
-                curr_inode_num = arr[i].inode_number;
+
+        int dentry_num = root_log->inode.size/sizeof(struct wfs_dentry);
+
+        for(int i = 0; i < dentry_num; i++){
+            if(strcmp(token, (struct wfs_dentry*) root_log->data[i])){
+                curr_inode_num = root_log->inode.inode_number;
                 curr_log = inode_num_to_log(curr_inode_num);
                 break;
             }
         }
         token = strtok(NULL, "/");
+        root_log = curr_log;
     }
-    return &curr_log->inode;
+    return curr_log;
 }
 
 static int wfs_getattr(const char *path, struct stat *stbuf) {
