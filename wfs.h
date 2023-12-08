@@ -7,6 +7,7 @@
 #define MAX_FILE_NAME_LEN 32
 #define WFS_MAGIC 0xdeadbeef
 
+struct wfs_sb *sb;
 struct wfs_sb {
     uint32_t magic;
     uint32_t head;

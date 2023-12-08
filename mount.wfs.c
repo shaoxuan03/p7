@@ -18,7 +18,7 @@ static struct wfs_inode* inode_finder(const char *path){
     struct wfs_dentry *arr = (struct wfs_dentry*) current_log->data;
     while(token != 0){
         int found = 0;
-        size_t num_of_entries = 1000000; // this thing should be the number of entries available in the disk
+        size_t num_of_entries = sb->head; // this thing should be the number of entries available in the disk, use head
         for(size_t i = 0; i < num_of_entries; i++){
             if(strcmp(token, arr[i].name) == 0){ 
                 *curr_inode = current_log->inode;
@@ -42,6 +42,7 @@ static int wfs_getattr(const char *path, struct stat *stbuf) {
     // Implementation of getattr function to retrieve file attributes
     // Fill stbuf structure with the attributes of the file/directory indicated by path
     // ...
+    printf("hi\n");
     int res = 0;
     memset(stbuf, 0, sizeof(struct stat));
     if(strcmp(path, "/") == 0){
@@ -67,6 +68,8 @@ static int wfs_getattr(const char *path, struct stat *stbuf) {
 }
 
 static int wfs_mknod(const char* path, mode_t mode, dev_t rdev) {
+   // char* copy_path = strdup(path);
+    
     return 0;
 }
 
@@ -85,27 +88,20 @@ static int wfs_mkdir(const char *path, mode_t mode){
 static int wfs_read(const char *path, char *buf, size_t size, off_t offset,
 			struct fuse_file_info *fi){
     
-    inode_finder(path);
+    struct wfs_inode *current_inode = inode_finder(path);
+    struct wfs_log_entry *log = 0;
+    if(current_inode == &log->inode){
+        for(int i = 0; i < 1000000; i++)
+            printf("%d", log->data[i]);
+    }
     //how to access the file that I want 
     return 0;
 }
 
 static int wfs_write(const char *path, const char *buf, size_t size,
 			 off_t offset, struct fuse_file_info *fi){
-    int fd;
-	int res;
 
-	(void) fi;
-	fd = open(path, O_WRONLY);
-	if (fd == -1)
-		return -errno;
-
-	res = pwrite(fd, buf, size, offset);
-	if (res == -1)
-		res = -errno;
-
-	close(fd);
-	return res;
+	return 0;
 }
 
 /**
@@ -149,6 +145,7 @@ static struct fuse_operations wfs_operations = {
     .unlink     = wfs_unlink,
 
 };
+
 
 int main(int argc, char *argv[]) {
     // Initialize FUSE with specified operations

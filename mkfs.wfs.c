@@ -12,7 +12,8 @@
 
 void superblock_init(struct wfs_sb* superblock){
     superblock->magic = WFS_MAGIC;
-    superblock->head = sizeof(struct wfs_sb) + sizeof(struct wfs_inode); //size of superblock and root entry
+    superblock->head = sizeof(struct wfs_sb); //size of superblock and root entry
+    sb = superblock;
 }
 
 int init_root(char* path){
