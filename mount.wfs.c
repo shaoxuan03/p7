@@ -78,7 +78,6 @@ static struct wfs_log_entry* inode_finder(const char *path){
 
         // Looping condition on path string
         token = strtok(NULL, "/");
-        root_log = curr_log;
     }
     return curr_log;
 }
@@ -98,12 +97,13 @@ static int wfs_getattr(const char *path, struct stat *stbuf) {
         stbuf->st_mode =  __S_IFDIR | 0755;
         stbuf->st_nlink = 2;
         return res;
-    }else if (strcmp(path, "/hello") == 0) {
-        // File "hello" inside the root directory
-        stbuf->st_mode = S_IFREG | 0444;
-        stbuf->st_nlink = 1;
-        stbuf->st_size = strlen("Hello, World!");
     }
+    // else if (strcmp(path, "/hello") == 0) {
+    //     // File "hello" inside the root directory
+    //     stbuf->st_mode = S_IFREG | 0444;
+    //     stbuf->st_nlink = 1;
+    //     stbuf->st_size = strlen("Hello, World!");
+    // }
     else{
         stbuf->st_uid = (uid_t)getuid();
         stbuf->st_gid = (uid_t)getgid();
