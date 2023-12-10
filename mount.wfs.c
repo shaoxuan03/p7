@@ -391,10 +391,22 @@ static int wfs_read( const char *path, char *buffer, size_t size, off_t offset, 
     return new_size;
 }
 
-static int wfs_write(const char *path, const char *buf, size_t size,
+static int wfs_write(const char *path, const char *buffer, size_t size,
 			 off_t offset, struct fuse_file_info *fi){
 
-	return 0;
+    struct wfs_inode *i = inode_finder(path);
+    struct wfs_log_entry *e=(void *)i;
+
+    size_t new_size;
+    if(i->size>size){
+        new_size=i->size;
+    }else{
+        new_size=size;
+    }
+
+    memcpy(e->data+offset, buffer, new_size);
+
+    return new_size;
 }
 
 /**
@@ -423,10 +435,6 @@ static int wfs_readdir(const char* path, void* buf,
 }
 
 static int wfs_unlink(const char *path) {
-    int res;
-    res = unlink(path);
-    if(res == -1)
-        return -errno;
 
     return 0;
 }
