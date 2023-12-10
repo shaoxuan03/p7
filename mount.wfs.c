@@ -362,7 +362,7 @@ static int wfs_mkdir(const char *path, mode_t mode)
 }
 
 // static int wfs_read(const char *path, char *buf, size_t size, off_t offset,
-// 			struct fuse_file_info *fi){
+//          struct fuse_file_info *fi){
 
 //     struct wfs_log_entry* log = (struct wfs_log_entry*)inode_finder(path);
 //     if(log == NULL){
@@ -517,3 +517,41 @@ int main( int argc, char *argv[] ){
 //     close(fd);
 //     return 0;
 // }
+//     munmap(disk, sizeof(struct wfs_sb)+sizeof(struct wfs_inode));
+//     return fuse_main(argc - 1, new_argv, &wfs_operations, NULL);
+// }
+int main( int argc, char *argv[] )
+{
+    char *disk_object=argv[argc-2];
+    argv[argc-2]=argv[argc-1];
+    argv[argc-1]=NULL;
+    argc--;
+
+    int fd=open(disk_object,O_RDWR);
+
+    struct stat st_obj;
+    stat(disk_object,&st_obj);
+
+    disk_map=mmap(0,st_obj.st_size,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
+    struct wfs_sb*sb=(void*)disk_map;
+    if(sb->magic!=WFS_MAGIC){
+        printf("not superblock\n");
+    }
+
+    length=st_obj.st_size;
+    head=sb->head;
+
+    for(int i=0;argv[i]!=NULL;i++){
+        printf("argv %s\n",argv[i]);
+    }
+
+    fuse_main( argc, argv, &wfs_operations, NULL );
+    printf("after fuse\n");
+
+    sb->head=head;
+
+    munmap(disk_map,st_obj.st_size);
+    close(fd);
+
+    return 0;
+}
