@@ -13,10 +13,9 @@
 #include <assert.h>
 
 //global variable
-struct wfs_starting_point* start;
 void* disk_map;
-int length;
 uint32_t head;
+int length;
 int inode_number;
 
 
@@ -374,7 +373,7 @@ static int wfs_mkdir(const char *path, mode_t mode)
 
 //     return 0;
 // }
-static int wfs_read( const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi )
+static int wfs_read(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi )
 {
     struct wfs_inode *i=inode_finder(path);
     struct wfs_log_entry*e=(void *)i;
@@ -452,32 +451,56 @@ static struct fuse_operations wfs_operations = {
 
 };
 
+int main( int argc, char *argv[] ){
+	char *disk_object = argv[argc-2];
+	argv[argc-2] = argv[argc-1];
+	argv[argc-1] = NULL;
+	argc--;
+
+	int fd = open(disk_object,O_RDWR);
+
+	struct stat st_obj;
+	stat(disk_object,&st_obj);
+
+	disk_map = mmap(0,st_obj.st_size,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
+	struct wfs_sb*sb = (void*)disk_map;
+	if(sb->magic != WFS_MAGIC){
+		printf("not superblock\n");
+	}
+
+	length = st_obj.st_size;
+	head = sb->head;
+
+	fuse_main( argc, argv, &wfs_operations, NULL );
+	printf("after fuse\n");
+
+	sb->head = head;
+
+	munmap(disk_map,st_obj.st_size);
+	close(fd);
+
+	return 0;
+}
 
 // int main(int argc, char *argv[]) {
 //     // Initialize FUSE with specified operations
 //     // Filter argc and argv here and then pass it to fuse_main
-//     if (argc < 4) {
-//         return -1;
-//     }
-//     printf("running here\n");
-//     start = malloc(sizeof(struct wfs_starting_point));
+
 //     int fd; 
-//     void* disk;
 //     struct stat file_stat;
+
 //     if((fd = open(argv[argc-2], O_RDWR)) < 0)
 //         return -1;
     
 //     if(stat(argv[argc-2], &file_stat) < 0)
 //         return -1;
 
-//     printf("running here2\n");
-//     if((disk = mmap(0, file_stat.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == MAP_FAILED)
+//     if((disk_map = mmap(0, file_stat.st_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == MAP_FAILED)
 //         return -1;
-//     printf("%p\n", (void*)start);
-//     start->disk = disk;
-//     printf("running here3.5\n");
-//     start->head = sizeof(struct wfs_sb);
-//     printf("running here4\n");
+
+//     struct wfs_sb* superblock = (struct wfs_sb*) disk_map;
+//     head = superblock->head;
+
 //     char *new_argv[argc - 1];
 //     for (int i = 0; i < argc; i++) {
 //         if (i == 3) {
@@ -487,41 +510,10 @@ static struct fuse_operations wfs_operations = {
 //         new_argv[i] = argv[i];
 //     }
 //     printf("running here final\n");
-//     munmap(disk, sizeof(struct wfs_sb)+sizeof(struct wfs_inode));
-//     return fuse_main(argc - 1, new_argv, &wfs_operations, NULL);
+    
+//     fuse_main(argc - 1, new_argv, &wfs_operations, NULL);
+//     sb->head = head;
+//     munmap(disk_map, sizeof(struct wfs_sb)+sizeof(struct wfs_inode));
+//     close(fd);
+//     return 0;
 // }
-int main( int argc, char *argv[] )
-{
-	char *disk_object=argv[argc-2];
-	argv[argc-2]=argv[argc-1];
-	argv[argc-1]=NULL;
-	argc--;
-
-	int fd=open(disk_object,O_RDWR);
-
-	struct stat st_obj;
-	stat(disk_object,&st_obj);
-
-	disk_map=mmap(0,st_obj.st_size,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
-	struct wfs_sb*sb=(void*)disk_map;
-	if(sb->magic!=WFS_MAGIC){
-		printf("not superblock\n");
-	}
-
-	length=st_obj.st_size;
-	head=sb->head;
-
-	for(int i=0;argv[i]!=NULL;i++){
-		printf("argv %s\n",argv[i]);
-	}
-
-	fuse_main( argc, argv, &wfs_operations, NULL );
-	printf("after fuse\n");
-
-	sb->head=head;
-
-	munmap(disk_map,st_obj.st_size);
-	close(fd);
-
-	return 0;
-}
