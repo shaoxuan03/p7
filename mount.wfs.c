@@ -216,13 +216,6 @@ static int wfs_getattr(const char *path, struct stat *stbuf) {
 return 0;
 }
 
-
-
-// static int wfs_mknod(const char* path, mode_t mode, dev_t rdev) {
-//    // char* copy_path = strdup(path);
-
-//     return 0;
-// }
 static int wfs_mknod(const char *path, mode_t mode,dev_t rdev)
 {
     char x[100];
@@ -266,7 +259,7 @@ static int wfs_mknod(const char *path, mode_t mode,dev_t rdev)
     head+=size;
     free(new_entry);
 
-    struct wfs_inode iii={
+    struct wfs_inode inode={
         .inode_number=inode_number,
         .deleted=0,
         .mode=S_IFREG|mode,
@@ -279,26 +272,15 @@ static int wfs_mknod(const char *path, mode_t mode,dev_t rdev)
         .links=1,
     };
 
-    memcpy((char*)disk_map+head, &iii,sizeof(iii));
+    memcpy((char*)disk_map+head, &inode,sizeof(inode));
 
-    head+=sizeof(iii);
+    head+=sizeof(inode);
 
     return 0;
 }
 
-// static int wfs_mkdir(const char *path, mode_t mode){
-//     //struct wfs_log_entry newlog;
-//     // this is wrong
-//     printf("running create dir\n");
-//     // int res;
-//     // res = mkdir(path, mode);
-//     // if(res == -1)
-//     //     return -errno;
-//     inode_finder(path);
-//     return 0;
-// }
-static int wfs_mkdir(const char *path, mode_t mode)
-{
+static int wfs_mkdir(const char *path, mode_t mode){
+    
     printf("mkdir called\n");
     char x[100];
     strcpy(x,path);
@@ -312,12 +294,21 @@ static int wfs_mkdir(const char *path, mode_t mode)
     struct wfs_inode *i=inode_finder(y);
     struct wfs_log_entry *e=(void*)i;
 
+    //update the parent dir size
     size_t size=sizeof(struct wfs_log_entry)+sizeof(struct wfs_dentry)+i->size;
     struct wfs_log_entry *new_entry=malloc(size);
+
+    //copy a new parent dir
     memcpy(new_entry,i,sizeof(*i));
     memcpy(new_entry->data,e->data,i->size);
     new_entry->inode.size+=sizeof(struct wfs_dentry);
 
+    // //put the new entry at disk_map + head
+    // memcpy((char*)disk_map+head,new_entry,size); 
+    // //move the head
+    // head+=size;
+
+    //create the new dir
     struct wfs_dentry *d=(void*)(new_entry->data+i->size);
 
     char input[25];
@@ -341,7 +332,7 @@ static int wfs_mkdir(const char *path, mode_t mode)
     head+=size;
     free(new_entry);
 
-    struct wfs_inode iii={
+    struct wfs_inode inode={
         .inode_number=inode_number,
         .deleted=0,
         .mode=S_IFDIR|mode,
@@ -354,38 +345,31 @@ static int wfs_mkdir(const char *path, mode_t mode)
         .links=1,
     };
 
-    memcpy((char*)disk_map+head, &iii,sizeof(iii));
+    memcpy((char*)disk_map+head, &inode,sizeof(inode));
 
-    head+=sizeof(iii);
+    head+=sizeof(inode);
 
     return 0;
 }
 
-// static int wfs_read(const char *path, char *buf, size_t size, off_t offset,
-//          struct fuse_file_info *fi){
+static int wfs_read(const char *path, char *buffer, size_t size, 
+             off_t offset, struct fuse_file_info *fi ){
 
-//     struct wfs_log_entry* log = (struct wfs_log_entry*)inode_finder(path);
-//     if(log == NULL){
-//         return -ENOENT;
-//     }
-    
-//     size_t new_size;
-
-//     return 0;
-// }
-static int wfs_read(const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi )
-{
-    struct wfs_inode *i=inode_finder(path);
-    struct wfs_log_entry*e=(void *)i;
+    struct wfs_inode *i = inode_finder(path);
+    if (i == NULL) {
+        // Handle case where the log entry is not found
+        return -ENOENT;
+    }
+    struct wfs_log_entry *e = (void *)i;
 
     size_t new_size;
-    if(i->size>size){
-        new_size=i->size;
+    if(i->size > size){
+        new_size = i->size;
     }else{
-        new_size=size;
+        new_size = size;
     }
 
-    memcpy(buffer, e->data+offset, new_size);
+    memcpy(buffer, e->data + offset, new_size);
 
     return new_size;
 }
@@ -394,22 +378,28 @@ static int wfs_write(const char *path, const char *buffer, size_t size,
 			 off_t offset, struct fuse_file_info *fi){
 
     struct wfs_inode *i = inode_finder(path);
-    struct wfs_log_entry *e=(void *)i;
+    if (i == NULL) {
+        // Handle case where the log entry is not found
+        return -ENOENT;
+    }
+    struct wfs_log_entry *e = (void *)i;
 
     size_t new_size;
-    if(i->size>size){
-        new_size=i->size;
+    if(i->size > size){
+        new_size = i->size;
     }else{
-        new_size=size;
+        new_size = size;
     }
 
-    memcpy(e->data+offset, buffer, new_size);
+    memcpy(e->data + offset, buffer, new_size);
 
     // update inode
     i->size = new_size;
     i->atime = time(NULL);
     i->mtime = time(NULL);
     i->ctime = time(NULL);
+
+    head += new_size;
 
     return new_size;
 }
@@ -439,8 +429,59 @@ static int wfs_readdir(const char* path, void* buf,
     return 0;
 }
 
-static int wfs_unlink(const char *path) {
+static int wfs_unlink(const char *path) { 
+    // printf("im here1\n");
+    // unsigned int dlt_inode_num;
+    // unsigned int dlt_size;
+    // unsigned int new_size;
+    // struct wfs_inode *i = inode_finder(path);
+    // if (i == NULL) {
+    //     // Handle case where the log entry is not found
+    //     return -ENOENT;
+    // }
+    // struct wfs_log_entry *e = (void *)i;
+    // e->inode.deleted = 1;
+    // dlt_inode_num = e->inode.inode_number;
+    // dlt_size = e->inode.size;
+    // printf("im here2\n");
+    
+    // //create a new log entry without the deleted inode
+    // char* copy = strdup(path);
+    // char** arr = tokenize(copy);
+    // //char* removed;
+    // char* parent_dir;
+    // for(int i = 0; i < 32; i++){
+    //     if(arr[i] != 0){
+    //         //removed = arr[i];
+    //         parent_dir = arr[i-1];
+    //     }
+    //     break;
+    // }
+    // printf("im here3\n");
+    // struct wfs_inode *parent_i = inode_finder(parent_dir);
+    // struct wfs_log_entry *parent_e = (struct wfs_log_entry*)parent_i;
+    // //update the new size of new log entry
+    // new_size = parent_e->inode.size - dlt_size + sizeof(struct wfs_log_entry) + sizeof(struct wfs_dentry);
+    // struct wfs_log_entry *new_log_entry = malloc(new_size);
 
+    // //copy inode to the new log entry
+    // printf("im here4\n");
+    // memcpy(new_log_entry, parent_i, sizeof(*parent_i));
+    // new_log_entry->inode.size -= dlt_size; //adjust the size of the data[]
+
+    // //copy data to the new log entry
+    // memcpy(new_log_entry->data, parent_e->data, parent_i->size);
+    
+    // //remove delete dentry from the data
+    // struct wfs_dentry* dentry = (struct wfs_dentry*)new_log_entry->data;
+    // while(dentry != NULL){
+    //     printf("im here5\n");
+    //     if(dentry->inode_number == dlt_inode_num){
+    //         dentry = NULL;
+    //     }
+    //     dentry++;
+    // }
+    // memcpy((char*)disk_map + head, new_log_entry, new_size);
     return 0;
 }
 
@@ -457,7 +498,7 @@ static struct fuse_operations wfs_operations = {
 
 };
 
-int main( int argc, char *argv[] ){
+int main(int argc, char *argv[] ){
 	char *disk_object = argv[argc-2];
 	argv[argc-2] = argv[argc-1];
 	argv[argc-1] = NULL;
