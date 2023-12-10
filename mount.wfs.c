@@ -406,6 +406,12 @@ static int wfs_write(const char *path, const char *buffer, size_t size,
 
     memcpy(e->data+offset, buffer, new_size);
 
+    // update inode
+    i->size = new_size;
+    i->atime = time(NULL);
+    i->mtime = time(NULL);
+    i->ctime = time(NULL);
+
     return new_size;
 }
 
