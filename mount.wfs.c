@@ -158,7 +158,7 @@ struct wfs_log_entry *getLatestLogEntryFromNum(int num) {
 struct wfs_inode *inode_finder(const char *path) {
 
     int flag=0;
-    printf("get_inode path %s\n",path);
+    //printf("get_inode path %s\n",path);
 
     char input[100];
     for(int i = 0; i < 100; i++) {
@@ -167,17 +167,17 @@ struct wfs_inode *inode_finder(const char *path) {
     char**tokens=tokenize(input);
 
     struct wfs_log_entry *curr = getLatestLogEntryFromNum(0);
-    printf("curr %p\n",(void*)curr);
-    printf("size: %ld\n", curr->inode.size/sizeof(struct wfs_dentry));
+    //printf("curr %p\n",(void*)curr);
+    //printf("size: %ld\n", curr->inode.size/sizeof(struct wfs_dentry));
 
     int i = 0;
     if(tokens[i] == NULL)    return (struct wfs_inode*)curr;
     while(tokens[i] != NULL) {
-        printf("Trying to find: %s\n", tokens[i]);
+        //printf("Trying to find: %s\n", tokens[i]);
         flag=0;
         struct wfs_dentry*e=((void*)curr->data);
         for(int j = 0; j < curr->inode.size/sizeof(struct wfs_dentry); j++) {
-            printf("DIR entry: %s\n", e->name);
+           // printf("DIR entry: %s\n", e->name);
             if(strcmp(tokens[i],e->name)==0) {
                 curr = getLatestLogEntryFromNum(e->inode_number);
                 flag=1;
@@ -430,58 +430,62 @@ static int wfs_readdir(const char* path, void* buf,
 }
 
 static int wfs_unlink(const char *path) { 
-    // printf("im here1\n");
-    // unsigned int dlt_inode_num;
-    // unsigned int dlt_size;
-    // unsigned int new_size;
-    // struct wfs_inode *i = inode_finder(path);
-    // if (i == NULL) {
-    //     // Handle case where the log entry is not found
-    //     return -ENOENT;
-    // }
-    // struct wfs_log_entry *e = (void *)i;
-    // e->inode.deleted = 1;
-    // dlt_inode_num = e->inode.inode_number;
-    // dlt_size = e->inode.size;
-    // printf("im here2\n");
+    printf("im here1\n");
+    unsigned int dlt_inode_num;
+    unsigned int dlt_size;
+    unsigned int new_size;
+    struct wfs_inode *i = inode_finder(path);
+    if (i == NULL) {
+        // Handle case where the log entry is not found
+        return -ENOENT;
+    }
+    struct wfs_log_entry *e = (void *)i;
+    e->inode.deleted = 1;
+    dlt_inode_num = e->inode.inode_number;
+    dlt_size = e->inode.size;
+    printf("im here2\n");
     
-    // //create a new log entry without the deleted inode
-    // char* copy = strdup(path);
-    // char** arr = tokenize(copy);
-    // //char* removed;
-    // char* parent_dir;
-    // for(int i = 0; i < 32; i++){
-    //     if(arr[i] != 0){
-    //         //removed = arr[i];
-    //         parent_dir = arr[i-1];
-    //     }
-    //     break;
-    // }
-    // printf("im here3\n");
-    // struct wfs_inode *parent_i = inode_finder(parent_dir);
-    // struct wfs_log_entry *parent_e = (struct wfs_log_entry*)parent_i;
-    // //update the new size of new log entry
-    // new_size = parent_e->inode.size - dlt_size + sizeof(struct wfs_log_entry) + sizeof(struct wfs_dentry);
-    // struct wfs_log_entry *new_log_entry = malloc(new_size);
+    //create a new log entry without the deleted inode
+    char x[100];
+    strcpy(x,path);
 
-    // //copy inode to the new log entry
-    // printf("im here4\n");
-    // memcpy(new_log_entry, parent_i, sizeof(*parent_i));
-    // new_log_entry->inode.size -= dlt_size; //adjust the size of the data[]
+    char y[100];
+    strcpy(y,removeLastToken(x));
+    if(strlen(y)==0){
+        strcpy(y,"/");
+    }
 
-    // //copy data to the new log entry
-    // memcpy(new_log_entry->data, parent_e->data, parent_i->size);
+    printf("im here3\n");
+    printf("%s\n", y);
+    struct wfs_inode *parent_i = inode_finder(y);
+    printf("im here4\n");
+    struct wfs_log_entry *parent_e = (struct wfs_log_entry*)parent_i;
+    //update the new size of new log entry
+    new_size = parent_e->inode.size - dlt_size + sizeof(struct wfs_log_entry) + sizeof(struct wfs_dentry);
+    printf("im here5\n");
+    struct wfs_log_entry *new_log_entry = malloc(new_size);
+
+    //copy inode to the new log entry
+    printf("im here6\n");
+    memcpy(new_log_entry, parent_i, sizeof(*parent_i));
+    new_log_entry->inode.size -= dlt_size; //adjust the size of the data[]
+
+    //copy data to the new log entry
+    memcpy(new_log_entry->data, parent_e->data, parent_i->size);
     
-    // //remove delete dentry from the data
-    // struct wfs_dentry* dentry = (struct wfs_dentry*)new_log_entry->data;
-    // while(dentry != NULL){
-    //     printf("im here5\n");
-    //     if(dentry->inode_number == dlt_inode_num){
-    //         dentry = NULL;
-    //     }
-    //     dentry++;
-    // }
-    // memcpy((char*)disk_map + head, new_log_entry, new_size);
+    //remove delete dentry from the data
+    struct wfs_dentry* dentry = (struct wfs_dentry*)new_log_entry->data;
+    while(dentry != NULL){
+        printf("im here7\n");
+        if(dentry->inode_number == dlt_inode_num){
+            printf("im here8\n");
+            *dentry -> name = 0;
+            break;
+        }
+        dentry++;
+        printf("im here9\n");
+    }
+    memcpy((char*)disk_map + head, new_log_entry, new_size);
     return 0;
 }
 
